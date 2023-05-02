@@ -2,13 +2,12 @@
 	
 # SpotDL-Syncer
 
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
-<br>
+A "ecosystem" of Python scripts to create and maintain multiple Spotify Playlists/Albums synchronized.
 
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)<br>
 ![](https://img.shields.io/github/stars/Rikiub/spotdl-syncer?style=social)
 
-A "ecosystem" of Python scripts to create and maintain multiple Spotify Playlists/Albums synchronized.
 > Powered by [spotDL](https://github.com/spotDL/spotify-downloader)
 	
 </div>
