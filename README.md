@@ -32,7 +32,7 @@ It is important to mention that depending on where you run the script, all opera
 2. Enter a valid Spotify URL (Playlist/Album) and follow the instructions. A folder with the name of the Playlist will be created in the same directory as the script.
 3. To sync only this Playlist, enter its folder and run `sync-playlist`.
 
-**WARNING**: Do not delete or move the `data.spotdl` file from the created folder, or you will break the synchronization!
+**WARNING**: Do not delete, rename or move the `data.spotdl` file from the created folder, or you will break the synchronization!
 
 ### Sync All Playlists
 
