@@ -2,8 +2,9 @@
 	
 # SpotDL-Syncer
 
+![](https://img.shields.io/github/stars/Rikiub/spotdl-syncer?style=social)
+
 A "ecosystem" of Python scripts to create and maintain multiple Spotify Playlists/Albums synchronized.
-<br>
 > Powered by [spotDL](https://github.com/spotDL/spotify-downloader)
 	
 </div>
