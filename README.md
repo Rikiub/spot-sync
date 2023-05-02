@@ -1,1 +1,3 @@
-# spotify-playlist-downloader
+<center>
+# spotdl-syncer
+</center>
