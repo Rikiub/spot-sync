@@ -23,7 +23,9 @@ class DIR:
 	@classmethod
 	def delete_temp(cls):
 		dir = cls.temp_dir
-		shutil.rmtree(dir)
+
+		if dir.exists():
+			shutil.rmtree(dir)
 
 	@classmethod
 	def rename_temp_dir(cls, name):
