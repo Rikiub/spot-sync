@@ -16,6 +16,7 @@ A "ecosystem" of Python scripts to create and maintain multiple Spotify Playlist
 
 - [Python 3.8](https://www.python.org/downloads/)
 	- [spotDL](https://github.com/spotDL/spotify-downloader)
+	- [Rich (Included with spotDL)](https://pypi.org/project/rich/)
 
 ## Usage
 
