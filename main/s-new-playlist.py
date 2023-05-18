@@ -1,9 +1,9 @@
 from pathlib import Path
-from time import sleep
+from rich import print
 import subprocess
 import shutil
+import atexit
 import json
-import sys
 
 class DIR:
 	start_dir = Path(__file__).resolve().parent
@@ -39,29 +39,25 @@ class SpotDL:
 				"https://open.spotify.com/album/"
 			)):
 				subprocess.run([
-					"spotdl", "--log-level", "ERROR",
-					"sync", url, "--save-file", "data.spotdl"
-				], cwd=DIR.temp_dir)
+					"spotdl", "--log-level", "INFO",
+					"sync", url,
+                    "--save-file", "data.spotdl"
+				], cwd=DIR.temp_dir).check_returncode()
 
 				if "playlist" in url:
 					SpotDL.type = "playlist"
 				elif "album" in url:
 					SpotDL.type = "album"
-
-				return True
 			else:
-				error()
-		except (NameError, subprocess.CalledProcessError):
-			return False
-		except KeyboardInterrupt:
-			print("\nCanceling...")
-			exit()
+				raise NameError()
+		except (NameError, KeyboardInterrupt, subprocess.CalledProcessError):
+			raise
 
 	def extract_playlist_name():
 		file = Path(DIR.temp_dir, DIR.json_file)
 
 		if file.exists():
-			open(file, "r", encoding="utf8")
+			file = open(file, "r", encoding="utf8")
 			data = json.load(file)
 
 			if "playlist" in SpotDL.type:
@@ -69,36 +65,42 @@ class SpotDL:
 			elif "album" in SpotDL.type:
 				return data["songs"][0]["album_name"]
 		else:
-			print("\nERROR: 'data.spotdl' file was not created!")
-			exit()
-
-def exit():
-	DIR.delete_temp()
-	sleep(2.0)
-	sys.exit()
-
-def main():
-	d = DIR()
-
-	print("Insert a valid Spotify Playlist/Album URL")
-	url = input(">> ")
-
-	d.create_temp_dir()
-	if not SpotDL.start_spotdl(url):
-		print("\nERROR: It's not a valid Spotify URL!")
-		exit()
-
-	type_name = SpotDL.extract_playlist_name()
-	new_dir = Path(d.temp_dir.parent, type_name)
-
-	if new_dir.exists():
-		print("\nERROR: The folder/playlist already exists")
-		exit()
-	else:
-		d.rename_temp_dir(new_dir)
-
-		print("\nSync completed!")
-		exit()
+			raise json.JSONDecodeError()
 
 if __name__ == "__main__":
-	main()
+	try:
+		d = DIR()
+
+		print("[bold italic cyan]Insert a valid Spotify URL")
+		url = input(">> ")
+
+		if url.lower() == 'q':
+			raise SystemExit()
+
+		d.create_temp_dir()
+		SpotDL.start_spotdl(url)
+
+		type_name = SpotDL.extract_playlist_name()
+		new_dir = Path(d.temp_dir.parent, type_name)
+
+		if new_dir.exists():
+			raise FileExistsError()
+		else:
+			d.rename_temp_dir(new_dir)
+
+			print("\n[bold cyan]Sync completed!")
+
+	except NameError:
+		print("\n[bold red]ERROR: It's not a valid Spotify URL.")
+	except subprocess.CalledProcessError:
+		print("\n[bold red]ERROR: SpotDL Error.")
+	except json.JSONDecodeError:
+		print("\n[bold red]ERROR: 'data.spotdl' file was not created.")
+	except FileExistsError:
+		print("\n[bold red]ERROR: The folder already exists")
+	except KeyboardInterrupt:
+		print("\n[bold red]Canceling...")
+	except SystemExit:
+		pass
+
+	atexit.register(d.delete_temp)

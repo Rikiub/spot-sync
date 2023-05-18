@@ -1,35 +1,35 @@
 from pathlib import Path
-from time import sleep
+from rich import print
 import subprocess
-import sys
-from rich.console import Console
 
-console = Console()
-
-def search_files(query):
+def get_directories_with_file(file_name):
 	cwd = Path(__file__).resolve().parent
+	directories = [path.parent.name for path in cwd.glob('**/' + file_name)]
 
-	for path_object in cwd.rglob(query):
+	if not directories:
+		raise FileNotFoundError()
+
+	for path_object in directories:
 		execute_file(path_object)
 
 def execute_file(dir):
-	dir_name = dir.parent.name
-	dir = dir.parent
-
-	console.print("\n[bold yellow]Updating playlist:[/]", dir_name)
-
 	try:
+		print(f"\n[bold italic yellow]Updating playlist:[/] [bright_blue]{dir}[/]")
+
 		subprocess.run([
-			"spotdl",
+			"spotdl", "--log-level", "INFO",
 			"sync", "data.spotdl", "--preload"
-		], cwd=dir)
+		], cwd=dir).check_returncode()
 	except (subprocess.CalledProcessError, KeyboardInterrupt):
-		console.print("\n[bold red]Canceling...[/]")
-		sleep(2.0)
-		sys.exit()
+		raise
 
 if __name__ == '__main__':
-	search_files("data.spotdl")
+	try:
+		get_directories_with_file("data.spotdl")
 
-	print("\nSync completed!")
-	sleep(2.0)
+		print("\n[bold cyan]Sync completed!")
+
+	except subprocess.CalledProcessError:
+		print("\n[bold red]SpotDL ERROR: A 'data.spotdl' file is corrupted. Delete the corrupted file and try again.")
+	except KeyboardInterrupt:
+		print("\n[bold red]Canceling...")
