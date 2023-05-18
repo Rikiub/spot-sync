@@ -29,9 +29,9 @@ It is important to mention that depending on where you run the script, all opera
 
 ### Sync New Playlist
 
-1. Run `new-playlist.py`
+1. Run `s-new-playlist.py`
 2. Enter a valid Spotify URL (Playlist/Album) and follow the instructions. A folder with the name of the Playlist will be created in the same directory as the script.
-3. To sync only this Playlist, enter its folder and run `sync-playlist`.
+3. To sync only this Playlist, enter its folder and run `s-sync-playlist`.
 
 **WARNING**: Do not delete, rename or move the `data.spotdl` file from the created folder, or you will break the synchronization!
 
@@ -39,7 +39,7 @@ It is important to mention that depending on where you run the script, all opera
 
 To sync all downloaded playlists:
 
-1. In `main`, run `sync-all`.
+1. In `main`, run `s-sync-all`.
 2. Wait for the program to synchronize all downloaded playlists in all directories in `main`; it may take a while.
 
 **WARNING**: The synchronization will remove any music files that are not in the Spotify Playlist, so do not store others music files in this folders.
