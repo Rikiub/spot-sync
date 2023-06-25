@@ -1,6 +1,6 @@
 <div align="center">
 	
-# SpotDL-Syncer
+# Spot-Sync
 
 > Most of this update is finished but it needs some extra adjustments.
 
