@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "spotdlsync"
+version = "0.1.0"
+description = "A extension of SpotDL to create and sync Spotify Playlist"
+authors = ["Rikiub <jesusviloriaolivar@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.3"
+spotdl = "^4.1.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
