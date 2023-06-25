@@ -4,7 +4,7 @@
 
 > Most of this update is finished but it needs some extra adjustments.
 
-<div>
+</div>
 
 ## TODO
 
