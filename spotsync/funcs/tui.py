@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from rich import print
-from rich.prompt import Prompt
+from utils.theme import print, input
 
 from .sync import Sync
 from .new import New, input_url_tui
@@ -24,35 +23,36 @@ def TUI(selection: str, target_dir: Path, target_file: str):
 
 def start():
 	try:
-		print(f'\n[bold yellow1]Actual directory: [pink1]"{TARGET_DIR}"[/]\n')
+		print(f'\n[high]Actual directory: [path]"{TARGET_DIR}"[/]\n')
 
-		print("[magenta]1.[/] [blue]Sync my current playlists[/]")
-		print("[magenta]2.[/] [blue]Create a new playlist[/]")
-		print("[magenta]3.[/] [blue]Change directory[/]")
-		print("[magenta]4.[/] [blue]Exit[/]")
-		opc = Prompt.ask("\n[bold cyan]What you want do?")
+		print("[enumerate]1.[/] [item]Sync my current playlists[/]")
+		print("[enumerate]2.[/] [item]Create a new playlist[/]")
+		print("[enumerate]3.[/] [item]Change directory[/]")
+		print("[enumerate]4.[/] [item]Exit[/]")
+		opc = int(input("\n[low]What you want do?[/]: "))
 
-		if opc == "1":
+		if opc == 1:
 			sync()
-		elif opc == "2":
+		elif opc == 2:
 			new()
-		elif opc == "3":
+		elif opc == 3:
 			change_dir()
-		elif opc == "4" or opc == "q":
+		elif opc == 4:
 			raise SystemExit
 		else:
 			raise ValueError
 	except ValueError:
-		print("\n[red]Please enter a valid number")
+		print("[warning]Please enter a valid number")
 	except KeyboardInterrupt:
 		pass
 
 def sync():
 	while True:
-		selection = Prompt.ask('\n[bold cyan]You want sync all [red]OR[/] select one directory?', choices=["all", "select"])
+		selection = input('\n[low]You want sync all [high]OR[/] select one directory?[/] [choices]\[all/select][/]: ')
 		if selection == "all" or selection == "select":
-			print()
 			break
+		else:
+			print("[warning]Please enter a valid option")
 	Sync(selection, TARGET_DIR, TARGET_FILE)
 
 def new():
@@ -63,7 +63,7 @@ def new():
 		pass
 
 def change_dir():
-	new_dir = Prompt.ask('\n[bold cyan]Insert the new directory')
+	new_dir = input('\n[low]Insert the new directory')
 
 	try:
 		if check_dir(new_dir):
@@ -78,5 +78,5 @@ def check_dir(path):
 	if path.exists():
 		return path
 	else:
-		print(f'\n[bold red]ERROR:[/] The directory [green]"{TARGET_DIR}"[/] not exist')
+		print(f'\n[error]ERROR:[/] The directory [object]"{TARGET_DIR}"[/] not exist')
 		raise ValueError

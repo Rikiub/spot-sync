@@ -9,7 +9,7 @@ repository = "https://github.com/Rikiub/spot-sync"
 keywords = ["music", "downloader", "spotdl", "spotify"]
 
 [tool.poetry.dependencies]
-python = "^3.4"
+python = ">=3.7.2,<3.12"
 spotdl = "^4.1.11"
 rich = "^13.4.2"
 
