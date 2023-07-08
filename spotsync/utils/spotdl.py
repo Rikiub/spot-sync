@@ -1,55 +1,67 @@
-from pathlib import Path
-import subprocess
-import json
+from typing import List
+import sys
 
-from utils.theme import print
+from spotipy import Spotify, SpotifyException, CacheFileHandler
+from spotipy.oauth2 import SpotifyClientCredentials
+
+from spotdl import Downloader
+from spotdl.utils.logging import init_logging
+from spotdl.utils.config import create_settings, get_config, get_cache_path
+from spotdl.utils.arguments import parse_arguments
+from spotdl.utils.spotify import SpotifyClient, save_spotify_cache
+from spotdl.console.entry_point import generate_initial_config, OPERATIONS
+
+VALID_URLS = ("https://open.spotify.com/playlist/")
 
 def check_spotify_url(url: str) -> str:
-	if url.startswith((
-		"https://open.spotify.com/playlist/"
-	)):
+	sp = getSpotifyClient()
+
+	if sp.playlist(url):
 		return url
 	else:
 		raise ValueError
 
-def check_playlist_changes(target_file: Path, playlist_name: str) -> str:
-	if target_file.parent.name != playlist_name:
-		return True
-	else:
-		return False
+def user_config():
+	generate_initial_config()
+	return get_config()
 
-def extract_playlist_name(target_file: Path) -> str:
+def getSpotifyClient():
+	config = user_config()
+
+	auth_manager = SpotifyClientCredentials(
+		client_id=config["client_id"],
+		client_secret=config["client_secret"],
+		cache_handler=CacheFileHandler(cache_path=get_cache_path())
+	)
+	return Spotify(auth_manager=auth_manager)
+
+instance = None
+
+def spotDLDownloader(args: List[str]):
+	global instance
+
 	try:
-		with target_file.open("r", encoding="utf8") as file:
-			data = json.load(file)
+		sys.argv = [sys.argv[0], *args]
+		arguments = parse_arguments()
 
-			url = data["songs"][0]["list_url"]
-			if check_spotify_url(url):
-				return data["songs"][0]["list_name"]
-	except json.JSONDecodeError:
-		print(f'[error]ERROR:[/] [object]"{target_file}"[/] file was not created')
+		spotify_settings, downloader_settings, web_settings = create_settings(arguments)
+
+		if not instance:
+			user_config()
+			SpotifyClient.init(**spotify_settings)
+			init_logging("INFO")
+			instance = True
+
+		downloader = Downloader(downloader_settings)
+
+		OPERATIONS[arguments.operation] (
+			arguments.query,
+			downloader
+		)
+
+	except:
 		raise
-
-def execute_spotdl(target_dir: Path, args: list):
-	try:
-		subprocess.run(
-			["spotdl", "--log-level", "INFO", *args],
-			cwd=target_dir
-		).check_returncode()
-	except subprocess.CalledProcessError:
-		print('[error]ERROR:[/] SpotDL threw an error. Check the traceback for more information')
-		raise
-	except KeyboardInterrupt:
-		print("[warning]Canceling...")
-		raise
-
-def syncPlaylist(target_file: Path) -> bool:
-	ARGS = ["sync", target_file.name, "--preload"]
-	execute_spotdl(target_file.parent, ARGS)
-	return True
-
-def createPlaylist(target_dir: Path, target_file: str, url: str) -> bool:
-	if check_spotify_url(url):
-		ARGS = ["sync", url, "--save-file", target_file]
-		execute_spotdl(target_dir, ARGS)
-		return True
+	finally:
+		downloader.progress_handler.close()
+		if spotify_settings["use_cache_file"]:
+			save_spotify_cache(spotify_client.cache)

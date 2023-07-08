@@ -12,8 +12,6 @@ theme = Theme({
 
     "enumerate": "magenta",
     "item": "blue",
-
-    "path": "pink1",
     "object": "green",
 
     "spotdl_log": "green"

@@ -1,48 +1,51 @@
 from pathlib import Path
 
-from utils.spotdl import (
+from utils.downloader import (
 	syncPlaylist,
 	check_playlist_changes,
-	extract_playlist_name,
-	subprocess
+	extract_local_playlist_name,
+    ConnectionError
 )
 from utils.theme import print, input
 
-def Sync(operation: str, target_dir: Path, target_file: str):
+SYNC_OPS = ("all", "select")
+
+def Sync(operation: str, output_path: Path, target_file: str):
 	"""
 	Sync current Playlists
 	"""
 
-	try:
-		# getting directories path
-		directories = search_dirs(target_dir, target_file)
+	if type(operation) == list:
+		operation = operation[0]
 
-		if operation == "all":
+	try:
+		if operation == SYNC_OPS[0]:
+			directories = search_dirs(output_path, target_file)
+
 			counter = len(directories)
 			for path_object in directories:
 				print(f'\n[low]-> [enumerate]{counter}[/]')
 				execute_file(path_object)
 				counter -= 1
-		elif operation == "select":
+		elif operation == SYNC_OPS[1]:
+			directories = search_dirs(output_path, target_file)
 			selected_dir = select_directory_TUI(directories)
 
 			print(f'\n[low]-> Selected')
 			execute_file(selected_dir)
 		else:
-			raise ValueError('Not specified operation type. Expected "all" or "select"')
+			raise ValueError('[error]Invalid operation because is expected:', *SYNC_OPS)
 
 		print("\n[success]Sync successful")
 
-	except (ValueError, subprocess.CalledProcessError):
+	except (ValueError, FileNotFoundError, KeyboardInterrupt, ConnectionError):
 		pass
-	except Exception as e:
-		print(e)
 
-def search_dirs(target_dir: Path, target_file: str) -> list:
-	directories = [path for path in target_dir.glob('**/' + target_file)]
+def search_dirs(output_path: Path, target_file: str) -> list:
+	directories = [path for path in output_path.glob('**/' + target_file)]
 
 	if not directories:
-		print(f'[error]ERROR:[/] No directories found with [object]"{target_file}"[/] file')
+		print(f'[warning]No directories found with [object]"{target_file}"[/] file')
 		raise FileNotFoundError
 
 	return directories
@@ -54,7 +57,8 @@ def execute_file(target_file: Path):
 	if syncPlaylist(target_file):
 
 		# rename directory if remote playlist was change
-		playlist_name = extract_playlist_name(target_file)
+		playlist_name = extract_local_playlist_name(target_file)
+
 		if check_playlist_changes(target_file, playlist_name):
 			print('[spotdl_log]Detected changes in remote Playlist. Renaming directory...')
 			target_file.parent.rename(playlist_name)
