@@ -1,11 +1,19 @@
 <div align="center">
-	
-# Spot-Sync
 
-> Most of this update is finished but it needs some extra adjustments.
+# Spotsync
+
+> CLI app to create and maintain multiple Spotify playlists synchronized.
+
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)<br>
+![](https://img.shields.io/github/stars/Rikiub/spotdl-syncer?style=social)
 
 </div>
 
-## TODO
+## Dependencies
 
-- [ ] Build and Publish to PyPi
+- Python 3.8
+	- [spotDL](https://github.com/spotDL/spotify-downloader)
+	- [Rich (Included with spotDL)](https://pypi.org/project/rich/)
+
+## Installation
