@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from utils.downloader import check_dir
+from utils.extractors import check_dir
 from utils.spotdl import check_spotify_url, VALID_URLS
 from utils.theme import print, input
 
-from .sync import Sync, SYNC_OPS
+from .sync import Sync, SYNC_OPTS
 from .new import New
 
 OPERATIONS = ("start", "sync", "new")
@@ -55,7 +55,7 @@ def start():
 def sync():
 	while True:
 		selection = input(f'\n[low]You want sync all [high]OR[/] select one directory?[/] [choices]\[all/select][/]: ')
-		if selection in SYNC_OPS:
+		if selection in SYNC_OPTS:
 			break
 		else:
 			print("[warning]Please enter a valid option")

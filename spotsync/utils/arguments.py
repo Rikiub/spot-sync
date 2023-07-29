@@ -1,10 +1,10 @@
 from argparse import ArgumentParser, Namespace
 
-from funcs.sync import Sync, SYNC_OPS
+from funcs.sync import Sync, SYNC_OPTS
 from funcs.new import New
 from funcs.tui import TUI
 from utils.spotdl import check_spotify_url, VALID_URLS
-from utils.downloader import (
+from utils.extractors import (
     check_dir,
     get_cwd
 )

@@ -1,25 +1,26 @@
+from typing import List
 from pathlib import Path
 
-from utils.downloader import (
-	syncPlaylist,
+from utils.spotdl import spotDLSyncer, ConnectionError
+from utils.extractors import (
 	check_playlist_changes,
-	extract_local_playlist_name,
-    ConnectionError
+	extract_local_playlist_name
 )
 from utils.theme import print, input
 
-SYNC_OPS = ("all", "select")
-
-def Sync(operation: str, output_path: Path, target_file: str):
+SYNC_OPTS = ("all", "select")
+def Sync(operation: SYNC_OPTS, output_path: Path, target_file: str):
 	"""
-	Sync current Playlists
+	Sync current Playlists.
 	"""
 
+	# check if argument "operation" is a list and convert
 	if type(operation) == list:
 		operation = operation[0]
 
 	try:
-		if operation == SYNC_OPS[0]:
+		# "all" operation
+		if operation == SYNC_OPTS[0]:
 			directories = search_dirs(output_path, target_file)
 
 			counter = len(directories)
@@ -27,23 +28,37 @@ def Sync(operation: str, output_path: Path, target_file: str):
 				print(f'\n[low]-> [enumerate]{counter}[/]')
 				execute_file(path_object)
 				counter -= 1
-		elif operation == SYNC_OPS[1]:
+
+		# "select" operation
+		elif operation == SYNC_OPTS[1]:
 			directories = search_dirs(output_path, target_file)
 			selected_dir = select_directory_TUI(directories)
 
 			print(f'\n[low]-> Selected')
 			execute_file(selected_dir)
+
+		# no "operation"? error got
 		else:
-			raise ValueError('[error]Invalid operation because is expected:', *SYNC_OPS)
+			raise ValueError('[error]Invalid operation because is expected:', *SYNC_OPTS)
 
 		print("\n[success]Sync successful")
 
 	except (ValueError, FileNotFoundError, KeyboardInterrupt, ConnectionError):
 		pass
 
-def search_dirs(output_path: Path, target_file: str) -> list:
+def search_dirs(output_path: Path, target_file: str) -> List[Path]:
+	"""
+	Search around a directory to found 'target_file'(s).
+
+	## Arguments
+	output_path: directory to search
+	target_file: files to found
+	"""
+
+	# main
 	directories = [path for path in output_path.glob('**/' + target_file)]
 
+	# no directories? error got
 	if not directories:
 		print(f'[warning]No directories found with [object]"{target_file}"[/] file')
 		raise FileNotFoundError
@@ -51,11 +66,15 @@ def search_dirs(output_path: Path, target_file: str) -> list:
 	return directories
 
 def execute_file(target_file: Path):
+	"""Start sync of the founded directories"""
+
 	print(f'[high]Syncing playlist:[/] [item]{target_file.parent.name}[/]')
 
-	# execute spotdl
-	if syncPlaylist(target_file):
-
+	# execute spotdl and check if executed successful
+	if spotDLSyncer(
+		query=target_file,
+		output_path=target_file.parent
+	):
 		# rename directory if remote playlist was change
 		playlist_name = extract_local_playlist_name(target_file)
 
@@ -63,7 +82,9 @@ def execute_file(target_file: Path):
 			print('[spotdl_log]Detected changes in remote Playlist. Renaming directory...')
 			target_file.parent.rename(playlist_name)
 
-def select_directory_TUI(directories: list) -> Path:
+def select_directory_TUI(directories: List[Path]) -> Path:
+	"""Simple TUI to select the directory to sync instead of sync all the folders."""
+
 	print()
 	for index, directory in enumerate(directories, start=1):
 		print(f'[enumerate]{index}.[/] [item]{directory.parent.name}[/]')
