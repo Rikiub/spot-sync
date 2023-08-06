@@ -2,30 +2,21 @@ from pathlib import Path
 from typing import Union
 import sys
 
-from requests import ConnectionError
+from requests.exceptions import ConnectionError
 
 from spotipy import Spotify, SpotifyException, CacheFileHandler
 from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.exceptions import SpotifyException
 
 from spotdl import Downloader
 from spotdl.utils.logging import init_logging
-from spotdl.utils.config import create_settings, get_config, get_cache_path, DEFAULT_CONFIG
-from spotdl.utils.arguments import parse_arguments
-from spotdl.utils.spotify import SpotifyClient, save_spotify_cache
-from spotdl.console.entry_point import generate_initial_config, OPERATIONS
+from spotdl.utils.config import get_config, get_cache_path, DEFAULT_CONFIG, SPOTIFY_OPTIONS
+from spotdl.utils.spotify import SpotifyClient
+from spotdl.console.entry_point import generate_initial_config, sync
 
 from utils.theme import print
 
 VALID_URLS = ("https://open.spotify.com/playlist/")
-
-def check_spotify_url(url: str) -> str:
-	"""Check URL with Spotipy."""
-	sp = getSpotifyClient()
-
-	if sp.playlist(url):
-		return url
-	else:
-		raise ValueError
 
 def getSpotifyClient() -> Spotify:
 	"""A Spotipy instance using the SpotDL cache path."""
@@ -39,6 +30,20 @@ def getSpotifyClient() -> Spotify:
 	)
 	return Spotify(auth_manager=auth_manager)
 
+def check_spotify_url(url: str) -> str:
+	"""Check URL with Spotipy."""
+
+	try:
+		sp = getSpotifyClient()
+		if sp.playlist(url):
+			return url
+	except SpotifyException:
+		print(url, '[warning]is not a valid Spotify URL.')
+		raise ValueError
+	except ConnectionError:
+		print("[warning]Failed to connect to internet.")
+		raise
+
 def user_config() -> dict:
 	"""
 	Return SpotDL user config file.
@@ -49,7 +54,7 @@ def user_config() -> dict:
 	return get_config()
 
 instance = None
-default_settings = {}
+default_settings = []
 
 def spotDLSyncer(
 	query: Union[Path, str],
@@ -62,8 +67,8 @@ def spotDLSyncer(
 
 	## Arguments
 	query:
-	  can be a "str(URL)" to Spotify playlist. That run the creation of an new Playlist folder.
-	  can be a "pathlib.Path" to .spotdl file. That run the sync of an current Playlist folder.
+	  "str(URL)" to Spotify playlist. That run the creation of an new Playlist folder.
+	  "pathlib.Path" to .spotdl file. That run the sync of an current Playlist folder.
 	output_path:
 	  where the files will be stored.
 	save_file:
@@ -75,30 +80,14 @@ def spotDLSyncer(
 	downloader = None
 
 	try:
-		sys.argv = [
-			sys.argv[0],
-			"sync", str(query),
-			"--output", str(output_path)
-		]
-
-		# if "query" is a string, run playlist creation mode
-		if type(query) == str:
-			if save_file:
-				sys.argv.append(
-					"--save-file", str(f"{output_path}/{save_file}")
-				)
-			else:
-				raise ValueError("For playlist creation mode you need provide a 'save_file' name.")
-		# else, run the sync mode
-
-		# parse "sys.argv" to argparse
-		arguments = parse_arguments()
-
-		# init SpotDL
-		spotify_settings, downloader_settings, web_settings = create_settings(arguments)
-
 		# if instance not exist, init a "singleton" instance
 		if not instance:
+			# init SpotDL Singleton
+			SpotifyClient.init(**SPOTIFY_OPTIONS)
+			init_logging("INFO")
+			instance = True
+
+		if instance:
 			# set spotsync defaults
 			default_settings = DEFAULT_CONFIG
 			default_settings["audio_providers"] = ["soundcloud", "bandcamp", "youtube-music"]
@@ -106,28 +95,38 @@ def spotDLSyncer(
 			default_settings["preload"] = True
 			default_settings["bitrate"] = "auto"
 
-			# read user config from '~/.spotdl/config.json' (Linux and Darwin)
+			default_settings["output"] = str(output_path)
+
+			# if "query" is a path run playlist creation mode. You need specify a "save_file" name or error got.
+			if type(query) == str:
+				if save_file:
+					default_settings["save_file"] = str(f"{output_path}/{save_file}")
+				else:
+					raise ValueError("For playlist creation mode you need provide a 'save_file' name.")
+			# elif "query" is a Path, run playlist sync mode.
+			elif isinstance(query, Path):
+				query = str(query)
+
+			# read user config from '~/.spotdl/config.json' (Linux and Darwin example)
 			custom_settings = user_config()
 			default_settings["format"] = custom_settings["format"]
 			default_settings["detect_formats"] = custom_settings["detect_formats"]
 
-			# init SpotDL Singleton
-			SpotifyClient.init(**spotify_settings)
-			init_logging("INFO")
-			instance = True
+			# parse custom settings
+			downloader = Downloader(default_settings)
 
-		# parse custom settings
-		downloader = Downloader(default_settings)
-
-		# Init Functions
-		OPERATIONS[arguments.operation] (
-			arguments.query,
-			downloader
-		)
+			# Init Functions
+			query_aux = [query]
+			sync(query_aux, downloader)
 
 	except (ConnectionError, SpotifyException):
 		print("[warning]Failed to connect to internet.")
-		raise
+	except ValueError:
+		import traceback
+		traceback.print_exc()
+		raise SystemExit(1)
+	except KeyboardInterrupt:
+		raise SystemExit
 	finally:
 		if downloader:
 			downloader.progress_handler.close()
