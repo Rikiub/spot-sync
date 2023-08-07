@@ -54,7 +54,6 @@ def user_config() -> dict:
 	return get_config()
 
 instance = None
-default_settings = []
 
 def spotDLSyncer(
 	query: Union[Path, str],
@@ -76,7 +75,7 @@ def spotDLSyncer(
 	"""
 
 	# persistent instance options
-	global instance, default_settings
+	global instance
 	downloader = None
 
 	try:
@@ -87,46 +86,45 @@ def spotDLSyncer(
 			init_logging("INFO")
 			instance = True
 
-		if instance:
-			# set spotsync defaults
-			default_settings = DEFAULT_CONFIG
-			default_settings["audio_providers"] = ["soundcloud", "bandcamp", "youtube-music"]
-			default_settings["lyrics_providers"] = ["synced", "musixmatch", "genius", "azlyrics"]
-			default_settings["preload"] = True
-			default_settings["bitrate"] = "auto"
+		# set spotsync defaults
+		default_settings = DEFAULT_CONFIG
+		default_settings["audio_providers"] = ["soundcloud", "bandcamp", "youtube-music"]
+		default_settings["lyrics_providers"] = ["synced", "musixmatch", "genius", "azlyrics"]
+		default_settings["preload"] = True
+		default_settings["bitrate"] = "auto"
 
-			default_settings["output"] = str(output_path)
+		default_settings["output"] = str(output_path)
 
-			# if "query" is a path run playlist creation mode. You need specify a "save_file" name or error got.
-			if type(query) == str:
-				if save_file:
-					default_settings["save_file"] = str(f"{output_path}/{save_file}")
-				else:
-					raise ValueError("For playlist creation mode you need provide a 'save_file' name.")
-			# elif "query" is a Path, run playlist sync mode.
-			elif isinstance(query, Path):
-				query = str(query)
+		# if "query" is a path run playlist creation mode. You need specify a "save_file" name or error got.
+		if type(query) == str:
+			if save_file:
+				default_settings["save_file"] = str(f"{output_path}/{save_file}")
+			else:
+				raise ValueError("For playlist creation mode you need provide a 'save_file' name.")
+		# elif "query" is a Path, run playlist sync mode.
+		elif isinstance(query, Path):
+			query = str(query)
 
-			# read user config from '~/.spotdl/config.json' (Linux and Darwin example)
-			custom_settings = user_config()
-			default_settings["format"] = custom_settings["format"]
-			default_settings["detect_formats"] = custom_settings["detect_formats"]
+		# read user config from '~/.spotdl/config.json' (Linux and Darwin example)
+		custom_settings = user_config()
+		default_settings["format"] = custom_settings["format"]
+		default_settings["detect_formats"] = custom_settings["detect_formats"]
 
-			# parse custom settings
-			downloader = Downloader(default_settings)
+		# parse custom settings
+		downloader = Downloader(default_settings)
 
-			# Init Functions
-			query_aux = [query]
-			sync(query_aux, downloader)
+		# Init Functions
+		query_aux = [query]
+		sync(query_aux, downloader)
 
 	except (ConnectionError, SpotifyException):
 		print("[warning]Failed to connect to internet.")
 	except ValueError:
 		import traceback
 		traceback.print_exc()
-		raise SystemExit(1)
+		raise
 	except KeyboardInterrupt:
-		raise SystemExit
+		raise
 	finally:
 		if downloader:
 			downloader.progress_handler.close()
